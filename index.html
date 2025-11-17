@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Колесо Фортуни</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    body {
+        margin: 0;
+        background: #0a1a33;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+
+    h1 {
+        text-align: center;
+        color: #fff;
+        margin-top: 20px;
+    }
+
+    #wheelCanvas {
+        display: block;
+        margin: 0 auto;
+        background: #0a1a33;
+        transition: transform 2s ease;
+    }
+
+    #panel {
+        width: 90%;
+        max-width: 600px;
+        margin: 20px auto;
+        background: #0f2850;
+        padding: 15px;
+        border-radius: 10px;
+        color: #fff;
+    }
+
+    textarea {
+        width: 100%;
+        height: 120px;
+        background: #123064;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        resize: none;
+        font-size: 15px;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #1f4fa8;
+        color: white;
+        font-size: 16px;
+        transition: 0.2s;
+    }
+
+    button:hover { background: #2d6acc; }
+
+    .snowflake {
+        position: fixed;
+        top: -10px;
+        color: #ffffff80;
+        pointer-events: none;
+        font-size: 10px;
+        animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+        0% { transform: translateY(-10px); }
+        100% { transform: translateY(110vh); }
+    }
+</style>
+</head>
+<body>
+
+<h1>Колесо Фортуни</h1>
+
+<canvas id="wheelCanvas" width="350" height="350"></canvas>
+
+<div id="panel">
+    <textarea id="inputArea"></textarea>
+    <button id="spinBtn">Крутити колесо</button>
+</div>
+
+<script>
+let defaultNames = [
+"Артьомова Вікторія Павлівна",
+"Атаманів Юрій Русланович",
+"Бей Матвій Сергійович",
+"Бичков Ілля Олексійович",
+"Демків Богдан Павлович",
+"Дідик Святослав Дмитрович",
+"Длугош Евеліна Юріївна",
+"Дудко Діана Валентинівна",
+"Євдокімов Захар Олександрович",
+"Йода Агнія Олександрівна",
+"Мавдрик Віктор Андрійович",
+"Остапчук Вероніка Іванівна",
+"Поцілуйко Вікторія Володимирівна",
+"Пучковська Ліна",
+"Струков Юрій Олександрович",
+"Сухорученков Михайло Сергійович",
+"Тарасюк Дар'я Вадимівна",
+"Троценко Ілля Олексійович",
+"Устенко Марія Григорівна"
+];
+
+function shortName(full) {
+    let p = full.split(" ");
+    if (p.length < 2) return full;
+    return `${p[1]} ${p[0].slice(0,2)}`;
+}
+
+document.getElementById("inputArea").value =
+    defaultNames.map(shortName).join(",\n");
+
+let colors = [
+"#174082","#2d6acc","#4e8bed",
+"#204f0a","#409419","#61b03c",
+"#4d2e07","#a38015","#d4a824",
+"#4d1c0a","#823417","#b04a25"
+];
+
+let entries = [];
+let lastText = "";
+
+let canvas = document.getElementById("wheelCanvas");
+let ctx = canvas.getContext("2d");
+
+let angle = 0;
+let spinning = false;
+
+// звук
+let clickSound = new Audio();
+clickSound.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAA/////w==";
+
+// оновлення варіантів
+function updateEntries() {
+    let txt = document.getElementById("inputArea").value.trim();
+    if (txt === lastText) return;
+
+    entries = txt.split(",")
+        .map(e => e.trim())
+        .filter(e => e.length > 0);
+
+    lastText = txt;
+    drawWheel();
+}
+
+setInterval(updateEntries, 1000);
+
+// малювання
+function drawWheel() {
+    let count = entries.length;
+    ctx.clearRect(0,0,350,350);
+    if (count === 0) return;
+
+    let step = 2 * Math.PI / count;
+
+    for (let i = 0; i < count; i++) {
+        ctx.beginPath();
+        ctx.moveTo(175,175);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.arc(175,175,170, step*i+angle, step*(i+1)+angle);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(175,175);
+        ctx.rotate(step*(i+0.5)+angle);
+        ctx.fillStyle = "white";
+        ctx.font = "15px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(entries[i], 160, 5);
+        ctx.restore();
+    }
+
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.moveTo(175, 10);
+    ctx.lineTo(165, 40);
+    ctx.lineTo(185, 40);
+    ctx.fill();
+}
+
+function playClick() {
+    clickSound.currentTime = 0;
+    clickSound.play();
+}
+
+// запуск
+document.getElementById("spinBtn").onclick = () => {
+    if (spinning || entries.length === 0) return;
+
+    spinning = true;
+
+    let startAngle = angle;
+    let endAngle = angle + Math.PI * 12; // 6 повних оберти
+    let startTime = performance.now();
+
+    function animate(now) {
+        let t = (now - startTime) / 8000; // рівно 8 секунд
+
+        if (t >= 1) {
+            angle = endAngle;
+            drawWheel();
+            spinning = false;
+            zoomToPointer();
+            return;
+        }
+
+        angle = startAngle + (endAngle - startAngle) * easeOutCubic(t);
+
+        playClick();
+        drawWheel();
+        requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+};
+
+// плавне уповільнення
+function easeOutCubic(x) {
+    return 1 - Math.pow(1 - x, 3);
+}
+
+// 📸 Плавне масштабування камери
+function zoomToPointer() {
+    canvas.style.transform = "scale(1.6) translateY(40px)";
+
+    setTimeout(() => {
+        canvas.style.transform = "scale(1)";
+    }, 5000);
+}
+
+// ❄ сніг
+function createSnowflake() {
+    let snow = document.createElement("div");
+    snow.className = "snowflake";
+    snow.innerText = "❄";
+    snow.style.left = Math.random()*100 + "vw";
+    snow.style.fontSize = (Math.random()*10 + 10) + "px";
+    snow.style.animationDuration = (Math.random()*5 + 5) + "s";
+    document.body.appendChild(snow);
+
+    setTimeout(() => snow.remove(), 10000);
+}
+
+setInterval(createSnowflake, 150);
+
+drawWheel();
+</script>
+
+</body>
+</html>
