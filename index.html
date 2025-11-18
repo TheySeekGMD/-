@@ -89,6 +89,7 @@
 </div>
 
 <script>
+// список
 let defaultNames = [
 "Артьомова Вікторія Павлівна",
 "Атаманів Юрій Русланович",
@@ -120,6 +121,7 @@ function shortName(full) {
 document.getElementById("inputArea").value =
     defaultNames.map(shortName).join(",\n");
 
+// кольори
 let colors = [
 "#174082","#2d6acc","#4e8bed",
 "#204f0a","#409419","#61b03c",
@@ -140,7 +142,7 @@ let spinning = false;
 let clickSound = new Audio();
 clickSound.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAA/////w==";
 
-// оновлення варіантів
+// оновлення
 function updateEntries() {
     let txt = document.getElementById("inputArea").value.trim();
     if (txt === lastText) return;
@@ -152,10 +154,9 @@ function updateEntries() {
     lastText = txt;
     drawWheel();
 }
-
 setInterval(updateEntries, 1000);
 
-// малювання
+// промальовка
 function drawWheel() {
     let count = entries.length;
     ctx.clearRect(0,0,350,350);
@@ -196,15 +197,19 @@ function playClick() {
 // запуск
 document.getElementById("spinBtn").onclick = () => {
     if (spinning || entries.length === 0) return;
-
     spinning = true;
 
     let startAngle = angle;
-    let endAngle = angle + Math.PI * 12; // 6 повних оберти
+
+    // 🔥 ПОВНИЙ РАНДОМ:
+    let randomFullRotations = Math.floor(Math.random() * 12) + 8; // 8–20 обертів
+    let randomOffset = Math.random() * Math.PI * 2; // випадкова зупинка
+    let endAngle = angle + randomFullRotations * Math.PI * 2 + randomOffset;
+
     let startTime = performance.now();
 
     function animate(now) {
-        let t = (now - startTime) / 8000; // рівно 8 секунд
+        let t = (now - startTime) / 8000;
 
         if (t >= 1) {
             angle = endAngle;
@@ -224,33 +229,28 @@ document.getElementById("spinBtn").onclick = () => {
     requestAnimationFrame(animate);
 };
 
-// плавне уповільнення
+// уповільнення
 function easeOutCubic(x) {
     return 1 - Math.pow(1 - x, 3);
 }
 
-// 📸 Плавне масштабування камери
+// камера
 function zoomToPointer() {
     canvas.style.transform = "scale(1.6) translateY(40px)";
-
-    setTimeout(() => {
-        canvas.style.transform = "scale(1)";
-    }, 5000);
+    setTimeout(() => canvas.style.transform = "scale(1)", 5000);
 }
 
-// ❄ сніг
+// сніг
 function createSnowflake() {
-    let snow = document.createElement("div");
-    snow.className = "snowflake";
-    snow.innerText = "❄";
-    snow.style.left = Math.random()*100 + "vw";
-    snow.style.fontSize = (Math.random()*10 + 10) + "px";
-    snow.style.animationDuration = (Math.random()*5 + 5) + "s";
-    document.body.appendChild(snow);
-
-    setTimeout(() => snow.remove(), 10000);
+    let s = document.createElement("div");
+    s.className = "snowflake";
+    s.innerText = "❄";
+    s.style.left = Math.random()*100 + "vw";
+    s.style.fontSize = (Math.random()*10 + 10) + "px";
+    s.style.animationDuration = (Math.random()*5 + 5) + "s";
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 10000);
 }
-
 setInterval(createSnowflake, 150);
 
 drawWheel();
